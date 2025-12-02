@@ -1,0 +1,5 @@
+win-env
+linux-env
+build/build
+build/main.spec
+build/dist/main/_internal
