@@ -14,14 +14,40 @@ def is_folder_accessible(target_folder):
     except PermissionError as e:
         return False
 
+def is_list_group_available(target_folder):
+    try:
+        sub.run(["icacls", target_folder], check=True, capture_output=True, text=True)
+    except sub.SubprocessError as e:
+        return False
+
 def take_own_dir(target_folder):
     sub.run(["takeown", "/f", "/r", "/d", "y", target_folder], check=True, capture_output=True)
 
-def is_list_group_available(target_folder):
-    sub.run(["icacls", target_folder])
-
 def is_everyone_present(target_folder):
-    sub.run(["icacls", target_folder])
+    pattern = r"\(Everyone\)"
+    text = sub.run(["icacls", target_folder], capture_output=True, check=True, text=True)
+
+    match_object = re.search(pattern, str(text))
+
+    if match_object:
+        return True
+    
+    return False
+
+def add_everyone_to_group(target_folder):
+    # Adding to everyone full access
+    sub.run(["icacls", target_folder, "/grant", "Everyone:F"], capture_output=True, check=True, text=True)
+
+def get_current_status(target_folder):
+    pattern = r"(Everyone:)\((\w)\)"
+    text = sub.run(["icacls", target_folder], capture_output=True, check=True, text=True)
+    
+    match_object = re.search(pattern, str(text))
+    
+    if match_object:
+        return match_object.group(2)
+    
+    return False
 
 def main():
     root = tk.Tk()
@@ -32,7 +58,14 @@ def main():
     try: 
         if (is_folder_accessible(target_folder) == False):
             if (is_list_group_available(target_folder) == False):
-                
+                take_own_dir(target_folder) 
+        
+        if (is_everyone_present(target_folder) == False):
+            add_everyone_to_group(target_folder)
+               
+        label = ttk.Label(master=root, text="Everyone Status: " + str(get_current_status(target_folder)))
+        label.pack(padx=20)
+
     except Exception as e:
         label = ttk.Label(master=root, text="path= " + target_folder + "\n" + str(e))
         label.pack(padx=20)
