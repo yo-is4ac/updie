@@ -1,16 +1,27 @@
 import subprocess as sub 
+import os
+import re
 import tkinter as tk
 from tkinter import ttk
 
-# Check the folder permissions
-# cd: Permission Denied? If not Proceed
-# if Permission Denied and Everyone is present settled to Deny All: take own rights from the folder 
-# if Everyone is not present Proceed
+# Is folder accesible? if not, can i list the groups inside it? 
+# If so i will search for everyone 
+# If not takeOwn From the Dir
 
 def is_folder_accessible(target_folder):
-    sub.run(["dir", target_folder], check=True)
+    try:
+        os.listdir(target_folder)
+    except PermissionError as e:
+        return False
 
-    return True
+def take_own_dir(target_folder):
+    sub.run(["takeown", "/f", "/r", "/d", "y", target_folder], check=True, capture_output=True)
+
+def is_list_group_available(target_folder):
+    sub.run(["icacls", target_folder])
+
+def is_everyone_present(target_folder):
+    sub.run(["icacls", target_folder])
 
 def main():
     root = tk.Tk()
@@ -18,11 +29,10 @@ def main():
 
     target_folder = "C:\\Windows\\SoftwareDistribution\\Download"
 
-    try:
-        #print(is_folder_accessible(sub, target_folder))
-        
-        label = ttk.Label(master=root, text="Result: " + str(is_folder_accessible(target_folder)))
-        label.pack(padx=20)
+    try: 
+        if (is_folder_accessible(target_folder) == False):
+            if (is_list_group_available(target_folder) == False):
+                
     except Exception as e:
         label = ttk.Label(master=root, text="path= " + target_folder + "\n" + str(e))
         label.pack(padx=20)
