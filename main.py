@@ -95,11 +95,20 @@ def toggle_update(status_label, button):
 
     ok = apply_permission(TARGET_FOLDER, new_state)
     if not ok:
-        messagebox.showerror("Error", "Failed to modify permissions.")
-        return
+        
+        messagebox.showwarning("Warning", "Failed to perform action, it may be your first time? taking ownership of the folder and trying again....")
 
+        if not is_folder_accessible(TARGET_FOLDER):
+            if not is_list_group_available(TARGET_FOLDER):
+                take_ownership(TARGET_FOLDER)
+        
+            if not has_everyone_entry(TARGET_FOLDER):
+                add_everyone(TARGET_FOLDER)
+        else:
+            messagebox.showerror("Error", "Failed to perform action")
     update_ui(status_label, button, new_state)
-
+    
+    return 
 
 # ------------------------------ MAIN UI ------------------------------
 
