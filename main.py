@@ -44,7 +44,6 @@ def has_everyone_entry(path):
     except Exception:
         return False
 
-
 def add_everyone(path):
     try:
         sub.run(["icacls", path, "/grant", "Everyone:F"], check=True, capture_output=True, text=True)
@@ -58,19 +57,21 @@ def get_folder_permission_status(path):
     pattern = r"Everyone:(\([\w]+\))"
     try:
         result = sub.run(["icacls", path], capture_output=True, check=True, text=True)
-        m = re.search(r"Everyone:(\(\w\))", result.stdout)
+        m = re.search(r"Everyone:(\([N, F]\))", result.stdout)
         if m:
             return m.group(1).strip("()")
+        else:
+            sub.run(["icacls", path, "/remove", "Everyone"])
     except Exception:
         pass
-    return None
+    return "F"
 
 
 def apply_permission(path, enabled):
     """enabled=True → grant   enabled=False → deny"""
     try:
         if enabled:
-            sub.run(["icacls", path, "/grant", "Everyone:F"], check=True, text=True, capture_output=True)
+            sub.run(["icacls", path, "/grant:r", "Everyone:F"], check=True, text=True, capture_output=True)
         else:
             sub.run(["icacls", path, "/deny", "Everyone:F"], check=True, text=True, capture_output=True)
         return True
@@ -118,6 +119,12 @@ def main():
     root.geometry("420x200")
     root.resizable(False, False)
 
+
+    #base = os.path.dirname(__file__)
+    #path = os.path.join(base, "icon.png")
+
+    #root.iconphoto(False, tk.PhotoImage(file="icon.png"))
+
     # Center on screen
     root.update_idletasks()
     w = 420
@@ -140,7 +147,7 @@ def main():
         if not is_folder_accessible(TARGET_FOLDER):
             if not is_list_group_available(TARGET_FOLDER):
                 take_ownership(TARGET_FOLDER)
-
+        
         if not has_everyone_entry(TARGET_FOLDER):
             add_everyone(TARGET_FOLDER)
 
